@@ -201,6 +201,8 @@ export interface IRasterLayerGalleryEntry {
 }
 
 export interface IJGISLayerBrowserRegistry {
-  getProviders(): IRasterLayerGalleryEntry[];
-  registerProvider(data: IRasterLayerGalleryEntry): void;
+  getRegistryLayers(): IRasterLayerGalleryEntry[];
+  addRegistryLayer(data: IRasterLayerGalleryEntry): void;
+  removeRegistryLayer(name: string): void;
+  clearRegistry(): void;
 }
