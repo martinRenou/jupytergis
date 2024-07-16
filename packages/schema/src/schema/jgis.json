@@ -15,6 +15,9 @@
     },
     "options": {
       "$ref": "#/definitions/jGISOptions"
+    },
+    "terrain": {
+      "$ref": "#/definitions/jGISTerrain"
     }
   },
   "definitions": {
@@ -142,6 +145,24 @@
         "zoom": {
           "type": "number",
           "default": 0
+        }
+      }
+    },
+    "jGISTerrain": {
+      "title": "jGISTerrain",
+      "type": "object",
+      "default": {},
+      "required": ["source", "exaggeration"],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "The id of the DEM source",
+          "default": ""
+        },
+        "exaggeration": {
+          "type": "number",
+          "default": 1
         }
       }
     }
