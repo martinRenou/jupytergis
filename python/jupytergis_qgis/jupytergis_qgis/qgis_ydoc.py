@@ -7,8 +7,6 @@ from functools import partial
 from pycrdt import Array, Map, Text
 from jupyter_ydoc.ybasedoc import YBaseDoc
 
-from .utils import import_project_from_qgis
-
 
 def reversed_tree(root):
     if isinstance(root, list):
@@ -94,6 +92,9 @@ class YQGIS(YBaseDoc):
         )
 
     def _load(self, source: str):
+        # Lazy import because qgis may not be installed
+        from .utils import import_project_from_qgis
+
         # TODO how about qgz?
         with tempfile.NamedTemporaryFile(delete=False, suffix=".qgs") as tmp:
             file_content = base64.b64decode(source)
