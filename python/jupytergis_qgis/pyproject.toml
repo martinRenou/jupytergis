@@ -49,6 +49,7 @@ artifacts = ["/jupytergis_qgis/notebook/objects/_schema/*.py"]
 [tool.hatch.build.targets.wheel.shared-data]
 "install.json" = "share/jupyter/labextensions/@jupytergis/jupytergis-qgis/install.json"
 "jupytergis_qgis/labextension" = "share/jupyter/labextensions/@jupytergis/jupytergis-qgis"
+"jupyter-config/server-config" = "etc/jupyter/jupyter_server_config.d"
 
 [tool.hatch.build.hooks.version]
 path = "jupytergis_qgis/_version.py"
