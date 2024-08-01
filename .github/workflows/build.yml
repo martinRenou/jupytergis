@@ -127,6 +127,7 @@ jobs:
           create-args: >-
             python=3.9
             jupyterlab
+            ipywidgets
             qgis
 
       - name: Download extension package
