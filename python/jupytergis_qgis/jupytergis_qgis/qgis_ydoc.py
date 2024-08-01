@@ -93,7 +93,7 @@ class YQGIS(YBaseDoc):
 
     def _load(self, source: str):
         # Lazy import because qgis may not be installed
-        from .utils import import_project_from_qgis
+        from .qgis_loader import import_project_from_qgis
 
         # TODO how about qgz?
         with tempfile.NamedTemporaryFile(delete=False, suffix=".qgs") as tmp:
