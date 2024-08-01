@@ -8,12 +8,6 @@ from pycrdt import Array, Map, Text
 from jupyter_ydoc.ybasedoc import YBaseDoc
 
 
-def reversed_tree(root):
-    if isinstance(root, list):
-        return reversed([reversed_tree(el) for el in root])
-    return root
-
-
 class YQGISBase(YBaseDoc):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,8 +58,7 @@ class YQGISBase(YBaseDoc):
         self._ysources.update(virtual_file["sources"])
 
         self._ylayerTree.clear()
-        # TODO Remove the reversing logic once we follow the QGIS convention
-        for obj in reversed_tree(virtual_file["layerTree"]):
+        for obj in virtual_file["layerTree"]:
             self._ylayerTree.append(obj)
 
         self._yoptions.clear()
