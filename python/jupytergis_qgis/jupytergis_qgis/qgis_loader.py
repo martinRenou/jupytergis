@@ -97,8 +97,12 @@ def qgis_layer_to_jgis(
     is_visible = qgis_layer.isVisible()
     layer_type = None
     source_type = None
-    layer_parameters = {}
+    source_id = str(uuid4())
+    layer_parameters = {
+        "source": source_id,
+    }
     source_parameters = {}
+
 
     if isinstance(layer, QgsRasterLayer):
         layer_type = "RasterLayer"
@@ -139,17 +143,16 @@ def qgis_layer_to_jgis(
             maxZoom=max_zoom,
             minZoom=min_zoom,
         )
+        # TODO Load style properly
+        layer_parameters.update(
+            type='fill'
+        )
 
     if layer_type is None:
         print(f"JUPYTERGIS - Enable to load layer type {type(layer)}")
         return
 
     layer_id = layer.id()
-    source_id = str(uuid4())
-
-    layer_parameters = {
-        "source": source_id,
-    }
 
     layers[layer_id] = {
         "name": layer_name,
