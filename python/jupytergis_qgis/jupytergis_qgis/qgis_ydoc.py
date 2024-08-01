@@ -14,7 +14,7 @@ def reversed_tree(root):
     return root
 
 
-class YQGIS(YBaseDoc):
+class YQGISBase(YBaseDoc):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._ydoc["layers"] = self._ylayers = Map()
@@ -23,6 +23,7 @@ class YQGIS(YBaseDoc):
         self._ydoc["layerTree"] = self._ylayerTree = Array()
         self._ydoc["terrain"] = self._yterrain = Map()
         self._source = ""
+        self._file_ext = None
 
     @property
     def layers(self) -> Map:
@@ -95,9 +96,22 @@ class YQGIS(YBaseDoc):
         # Lazy import because qgis may not be installed
         from .qgis_loader import import_project_from_qgis
 
-        # TODO how about qgz?
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".qgs") as tmp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=self._file_ext) as tmp:
             file_content = base64.b64decode(source)
             tmp.write(file_content)
 
         return import_project_from_qgis(tmp.name)
+
+
+class YQGS(YQGISBase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._file_ext = ".qgs"
+
+
+class YQGZ(YQGISBase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._file_ext = ".qgz"

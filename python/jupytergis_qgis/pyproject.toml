@@ -87,4 +87,5 @@ before-build-python = ["jlpm clean:all"]
 ignore = ["W002"]
 
 [project.entry-points.jupyter_ydoc]
-QGIS = "jupytergis_qgis.qgis_ydoc:YQGIS"
+QGZ = "jupytergis_qgis.qgis_ydoc:YQGZ"
+QGS = "jupytergis_qgis.qgis_ydoc:YQGS"

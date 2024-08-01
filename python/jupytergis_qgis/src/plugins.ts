@@ -20,7 +20,7 @@ import {
 import { JupyterGISWidgetFactory } from '@jupytergis/jupytergis-core';
 import { IJupyterGISDocTracker, IJupyterGISWidget } from '@jupytergis/schema';
 import { requestAPI } from '@jupytergis/base';
-import { JupyterGISFCModelFactory } from './modelfactory';
+import { QGSModelFactory, QGZModelFactory } from './modelfactory';
 
 const FACTORY = 'Jupytercad QGIS Factory';
 
@@ -51,8 +51,8 @@ const activate = async (
   const widgetFactory = new JupyterGISWidgetFactory({
     name: FACTORY,
     modelName: 'jupytergis-qgismodel',
-    fileTypes: ['QGIS'],
-    defaultFor: ['QGIS'],
+    fileTypes: ['QGS', 'QGZ'],
+    defaultFor: ['QGS', 'QGZ'],
     tracker,
     commands: app.commands,
     externalCommandRegistry,
@@ -63,23 +63,35 @@ const activate = async (
   app.docRegistry.addWidgetFactory(widgetFactory);
 
   // Creating and registering the model factory for our custom DocumentModel
-  const modelFactory = new JupyterGISFCModelFactory();
-  app.docRegistry.addModelFactory(modelFactory);
+  app.docRegistry.addModelFactory(new QGSModelFactory());
+  app.docRegistry.addModelFactory(new QGZModelFactory());
   // register the filetype
   app.docRegistry.addFileType({
-    name: 'QGIS',
-    displayName: 'QGIS',
+    name: 'QGS',
+    displayName: 'QGS',
     mimeTypes: ['application/octet-stream'],
-    extensions: ['.qgs', '.qgz'],
+    extensions: ['.qgs', '.QGS'],
     fileFormat: 'base64',
-    contentType: 'QGIS'
+    contentType: 'QGS'
+  });
+  app.docRegistry.addFileType({
+    name: 'QGZ',
+    displayName: 'QGZ',
+    mimeTypes: ['application/octet-stream'],
+    extensions: ['.qgz', '.QGZ'],
+    fileFormat: 'base64',
+    contentType: 'QGZ'
   });
 
   const QGISSharedModelFactory: SharedDocumentFactory = () => {
     return new JupyterGISDoc();
   };
   drive.sharedModelFactory.registerDocumentFactory(
-    'QGIS',
+    'QGS',
+    QGISSharedModelFactory
+  );
+  drive.sharedModelFactory.registerDocumentFactory(
+    'QGZ',
     QGISSharedModelFactory
   );
 

@@ -5,7 +5,7 @@ import { Contents } from '@jupyterlab/services';
 /**
  * A Model factory to create new instances of JupyterGISModel.
  */
-export class JupyterGISFCModelFactory
+export class JupyterGISModelFactoryBase
   implements DocumentRegistry.IModelFactory<JupyterGISModel>
 {
   /**
@@ -28,7 +28,7 @@ export class JupyterGISFCModelFactory
    * @returns The content type
    */
   get contentType(): Contents.ContentType {
-    return 'QGIS';
+    throw 'Not implemented';
   }
 
   /**
@@ -82,4 +82,26 @@ export class JupyterGISFCModelFactory
   }
 
   private _disposed = false;
+}
+
+export class QGZModelFactory extends JupyterGISModelFactoryBase {
+  /**
+   * The content type of the file.
+   *
+   * @returns The content type
+   */
+  get contentType(): Contents.ContentType {
+    return 'QGZ';
+  }
+}
+
+export class QGSModelFactory extends JupyterGISModelFactoryBase {
+  /**
+   * The content type of the file.
+   *
+   * @returns The content type
+   */
+  get contentType(): Contents.ContentType {
+    return 'QGS';
+  }
 }
