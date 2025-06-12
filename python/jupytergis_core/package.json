@@ -106,6 +106,7 @@
     "extension": true,
     "outputDir": "jupytergis_core/labextension",
     "sharedPackages": {
+
       "@jupytergis/base": {
         "singleton": true,
         "bundled": true
