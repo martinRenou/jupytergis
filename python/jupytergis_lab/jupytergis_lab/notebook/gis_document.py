@@ -155,7 +155,9 @@ class GISDocument(CommWidget):
         # TODO Change this when ipykernel supports awaiting incomming
         # comm messages without being blocked by the execution request
         is_xeus_python = get_ipython().__class__.__name__ == "XPythonShell"
-        self.supports_top_level_await = is_xeus_python and version("xeus_python_shell") >= "0.8.0"
+        self.supports_top_level_await = (
+            is_xeus_python and version("xeus_python_shell") >= "0.8.0"
+        )
 
         if not self.supports_top_level_await:
             warnings.warn(
