@@ -158,7 +158,7 @@ jobs:
           micromamba-version: '1.5.5-0'
           environment-name: gis
           create-args: >-
-            python
+            python=3.13
             pip
             qgis
             xeus-python>=0.19
