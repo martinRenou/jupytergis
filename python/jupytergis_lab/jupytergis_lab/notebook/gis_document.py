@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import types
+import warnings
 import xml.etree.ElementTree as ET
+from importlib.metadata import version
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 from urllib.parse import urlparse
 from uuid import uuid4
 
 import requests
+from IPython import get_ipython
 from IPython.display import display
 from jupytergis_core.schema import (
     IGeoJSONSource,
@@ -140,35 +145,61 @@ class GISDocument(CommWidget):
 
         self.ydoc["layers"] = self._layers = Map()
         self.ydoc["sources"] = self._sources = Map()
-        self.ydoc["options"] = self._options = Map(
-            {
-                "latitude": 0,
-                "longitude": 0,
-                "zoom": 0,
-                "bearing": 0,
-                "pitch": 0,
-                "projection": "EPSG:3857",
-            },
-        )
+        self.ydoc["options"] = self._options = Map({})
         self.ydoc["layerTree"] = self._layerTree = Array()
         self.ydoc["metadata"] = self._metadata = Map()
-
-        if latitude is not None:
-            self._options["latitude"] = latitude
-        if longitude is not None:
-            self._options["longitude"] = longitude
-        if extent is not None:
-            self._options["extent"] = extent
-        if zoom is not None:
-            self._options["zoom"] = zoom
-        if bearing is not None:
-            self._options["bearing"] = bearing
-        if pitch is not None:
-            self._options["pitch"] = pitch
-        if projection is not None:
-            self._options["projection"] = projection
-
         self.tile_server = None
+        self._ready_future = asyncio.Future()
+        self._is_ready = False
+        self.supports_top_level_await = self._check_top_level_async_support()
+
+        if not self.supports_top_level_await:
+            warnings.warn(
+                "The JupyterGIS Python API is better experienced in the xeus-python kernel which supports real top level await",
+                stacklevel=2,
+            )
+
+        def handle_options_change(self, event):
+            if not self._ready_future.done():
+                self._ready_future.set_result(None)
+                self._is_ready = True
+
+            self._options_subscription.unobserve(self._options_subscription)
+
+            if latitude is not None:
+                self._options["latitude"] = latitude
+            if longitude is not None:
+                self._options["longitude"] = longitude
+            if extent is not None:
+                self._options["extent"] = extent
+            if zoom is not None:
+                self._options["zoom"] = zoom
+            if bearing is not None:
+                self._options["bearing"] = bearing
+            if pitch is not None:
+                self._options["pitch"] = pitch
+            if projection is not None:
+                self._options["projection"] = projection
+
+        self._handle_options_change = types.MethodType(handle_options_change, self)
+        self._options_subscription = self._options.observe(self._handle_options_change)
+
+    async def ready(self):
+        if not self.supports_top_level_await:
+            warnings.warn(
+                "The kernel does not support top level awaiting comm messages. The JupyterGIS API works better with a recent version of xeus-python today. There are discussions ongoing on making it work in ipykernel",
+                stacklevel=2,
+            )
+            return None
+        return await self._ready_future
+
+    def _assert_is_ready(self):
+        if not self._is_ready:
+            raise RuntimeError("Document is not ready yet.")
+
+    def _check_top_level_async_support(self):
+        is_xeus_python = get_ipython().__class__.__name__ == "XPythonShell"
+        return is_xeus_python and version("xeus_python_shell") >= "0.8.0"
 
     @property
     def layers(self) -> dict:
@@ -269,6 +300,8 @@ class GISDocument(CommWidget):
         :param opacity: The opacity, between 0 and 1.
         :param url_parameters: Extra URL parameters for tile requests.
         """
+        # First check if the document is ready before adding a raster layer
+        self._assert_is_ready()
         # Extract name from URL if not provided
         if name is None:
             name = _extract_layer_name(url)
@@ -317,6 +350,9 @@ class GISDocument(CommWidget):
         :param opacity: The opacity, between 0 and 1.
         :param symbology: The symbology configuration to persist with the layer.
         """
+        # First check if the document is ready before adding a vectortile layer
+        self._assert_is_ready()
+
         # Extract name from URL if not provided
         if name is None:
             name = _extract_layer_name(url)
@@ -370,6 +406,12 @@ class GISDocument(CommWidget):
         :param opacity: The opacity, between 0 and 1.
         :param symbology: The symbology configuration to persist with the layer.
         """
+        # First check if the document is ready before adding a geojson layer
+        self._assert_is_ready()
+
+        if isinstance(path, Path):
+            path = str(path)
+
         if isinstance(path, Path) and data is not None:
             raise ValueError("Cannot create a GeoJSON layer without data")
 
@@ -431,6 +473,10 @@ class GISDocument(CommWidget):
         # opened here from the notebook is reused by the frontend without the
         # user having to sign in a second time from the UI. The bearer is a
         # session identifier, not long-lived credentials.
+
+        # First check if the document is ready before adding an openeo tile layer
+        self._assert_is_ready()
+
         source = {
             "type": SourceType.OpenEOTileSource,
             "name": f"{name} Source" if name is not None else "OpenEO Tiles Source",
@@ -466,6 +512,9 @@ class GISDocument(CommWidget):
         :param coordinates: Corners of image specified in longitude, latitude pairs.
         :param opacity: The opacity, between 0 and 1.
         """
+        # First check if the document is ready before adding an image layer
+        self._assert_is_ready()
+
         if url is None or coordinates is None:
             raise ValueError("URL and Coordinates are required")
         # Extract name from URL if not provided
@@ -514,6 +563,9 @@ class GISDocument(CommWidget):
         :param opacity: The opacity, between 0 and 1, defaults to 1.0
         :param symbology: The symbology configuration to persist with the layer.
         """
+        # First check if the document is ready before adding a geotiff layer
+        self._assert_is_ready()
+
         # Extract name from URL if not provided
         if name is None:
             name = _extract_layer_name(url)
@@ -611,6 +663,9 @@ class GISDocument(CommWidget):
         :param name: The name that will be used for the object in the document, defaults to "Hillshade Layer"
         :param attribution: The attribution.
         """
+        # First check if the document is ready before adding a hillshade layer
+        self._assert_is_ready()
+
         if urlParameters is None:
             urlParameters = {}
         # Extract name from URL if not provided
@@ -651,6 +706,9 @@ class GISDocument(CommWidget):
         :param opacity: The opacity, between 0 and 1.
         :param symbology: The symbology configuration to persist with the layer.
         """
+        # First check if the document is ready before adding a geoparquet layer
+        self._assert_is_ready()
+
         # Extract name from path if not provided
         if name is None:
             name = _extract_layer_name(path)
@@ -697,6 +755,12 @@ class GISDocument(CommWidget):
         :param opacity: The opacity, between 0 and 1.
         :param symbology: The symbology configuration to persist with the layers.
         """
+        # First check if the document is ready before adding a geoparquet vector layer
+        self._assert_is_ready()
+
+        if isinstance(table_names, str):
+            table_names = [part.strip() for part in table_names.split(",")]
+
         if table_names is None:
             table_names = get_gpkg_layers(path, "features")
         elif isinstance(table_names, str):
@@ -766,6 +830,9 @@ class GISDocument(CommWidget):
         :param attribution: The attribution.
         :param opacity: The opacity, between 0 and 1.
         """
+        # First check if the document is ready before adding a geoparquet raster layer
+        self._assert_is_ready()
+
         if isinstance(table_names, str):
             table_names = [part.strip() for part in table_names.split(",")]
 
@@ -832,6 +899,9 @@ class GISDocument(CommWidget):
             See the `TiTiler algorithm docs <https://developmentseed.org/titiler/examples/notebooks/Working_with_Algorithm>`_
             for details.
         """
+        # First check if the document is ready before adding a data array layer
+        self._assert_is_ready()
+
         try:
             from jupyter_tiler.titiler import _get_server, add_data_array
         except ImportError as e:
@@ -989,6 +1059,9 @@ class GISDocument(CommWidget):
         interpolate:
             Whether to interpolate between grid cells when overzooming.
         """
+        # First check if the document is ready before adding a wms tile layer
+        self._assert_is_ready()
+
         if not url or not isinstance(url, str):
             raise ValueError("url must be a non-empty string")
         if not layer_name or not isinstance(layer_name, str):

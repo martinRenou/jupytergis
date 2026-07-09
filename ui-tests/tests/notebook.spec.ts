@@ -22,8 +22,9 @@ const testCellOutputs = async (
 
     await page.notebook.openByPath(`${tmpPath}/${notebook}`);
     await page.notebook.activate(notebook);
-
-    await page.waitForTimeout(1000);
+    await expect(
+      page.getByLabel(notebook).getByText('Python 3.12 (XPython)'),
+    ).toBeVisible();
 
     const getCaptureImageName = (
       contextPrefix: string,
