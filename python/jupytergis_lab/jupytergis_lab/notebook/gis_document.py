@@ -151,11 +151,15 @@ class GISDocument(CommWidget):
         self.tile_server = None
         self._ready_future = asyncio.Future()
         self._is_ready = False
-        self.supports_top_level_await = self._check_top_level_async_support()
+
+        # TODO Change this when ipykernel supports awaiting incomming
+        # comm messages without being blocked by the execution request
+        is_xeus_python = get_ipython().__class__.__name__ == "XPythonShell"
+        self.supports_top_level_await = is_xeus_python and version("xeus_python_shell") >= "0.8.0"
 
         if not self.supports_top_level_await:
             warnings.warn(
-                "The JupyterGIS Python API is better experienced in the xeus-python kernel which supports real top level await",
+                "The JupyterGIS Python API is better experienced in the xeus-python kernel which supports awaiting comm messages",
                 stacklevel=2,
             )
 
@@ -187,7 +191,7 @@ class GISDocument(CommWidget):
     async def ready(self):
         if not self.supports_top_level_await:
             warnings.warn(
-                "The kernel does not support top level awaiting comm messages. The JupyterGIS API works better with a recent version of xeus-python today. There are discussions ongoing on making it work in ipykernel",
+                "The kernel does not support awaiting comm messages. The JupyterGIS API works better with xeus-python>=0.19.0. There are discussions ongoing on making it work in ipykernel.",
                 stacklevel=2,
             )
             return None
@@ -196,10 +200,6 @@ class GISDocument(CommWidget):
     def _assert_is_ready(self):
         if not self._is_ready:
             raise RuntimeError("Document is not ready yet.")
-
-    def _check_top_level_async_support(self):
-        is_xeus_python = get_ipython().__class__.__name__ == "XPythonShell"
-        return is_xeus_python and version("xeus_python_shell") >= "0.8.0"
 
     @property
     def layers(self) -> dict:
