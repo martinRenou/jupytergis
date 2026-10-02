@@ -7,6 +7,7 @@ import {
   connect as openEOConnect,
   IOpenEOConnectionInfo,
   listOpenEOConnections,
+  Signin,
 } from './OpenEOTileLayer';
 import { CodeExportPanel } from './codeExportPanel';
 import { JsonEditor } from './jsonEditor';
@@ -413,8 +414,6 @@ const Form: React.FC<IFormProps> = ({
   );
   const [serverBusy, setServerBusy] = React.useState(false);
   const [serverError, setServerError] = React.useState<string | null>(null);
-  const [serverUsername, setServerUsername] = React.useState('');
-  const [serverPassword, setServerPassword] = React.useState('');
   // Server section has three explicit modes: pick/enter a URL, enter
   // credentials, or already connected. Credentials inputs are only
   // visible in 'signin' so they don't clutter the dialog when not
@@ -507,9 +506,12 @@ const Form: React.FC<IFormProps> = ({
     const next: IOpenEOConnectionInfo = {
       url: raw,
       signIn: {
-        serverUrl: raw,
-        username: serverUsername,
-        password: serverPassword,
+        // serverUrl: raw,
+        type: 'basic',
+        data: {
+          username: serverUsername,
+          password: serverPassword,
+        }
       },
     };
     try {
@@ -525,7 +527,6 @@ const Form: React.FC<IFormProps> = ({
     setServerInput(resolved);
     setServers(prev => (prev.includes(resolved) ? prev : [...prev, resolved]));
     setConnectionInfo(next);
-    setServerPassword('');
     setServerBusy(false);
     setServerMode('connected');
   };
@@ -1023,69 +1024,7 @@ const Form: React.FC<IFormProps> = ({
                 )}
 
                 {serverMode === 'signin' && (
-                  <>
-                    <div className="jp-openeo-signin-header">
-                      Sign in to <code>{serverInput.trim()}</code>
-                      <button
-                        type="button"
-                        className="jp-openeo-link-btn"
-                        onClick={onChangeServer}
-                        disabled={serverBusy}
-                      >
-                        Change server
-                      </button>
-                    </div>
-                    {serverError && (
-                      <div className="jp-openeo-server-alert jp-mod-error">
-                        {serverError}
-                      </div>
-                    )}
-                    <label className="jp-openeo-field">
-                      <span>Username</span>
-                      <input
-                        ref={usernameRef}
-                        type="text"
-                        autoComplete="username"
-                        value={serverUsername}
-                        onChange={e => setServerUsername(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            void onLogin();
-                          }
-                        }}
-                        disabled={serverBusy}
-                      />
-                    </label>
-                    <label className="jp-openeo-field">
-                      <span>Password</span>
-                      <input
-                        type="password"
-                        autoComplete="current-password"
-                        value={serverPassword}
-                        onChange={e => setServerPassword(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            void onLogin();
-                          }
-                        }}
-                        disabled={serverBusy}
-                      />
-                    </label>
-                    <div className="jp-openeo-signin-actions">
-                      <button
-                        type="button"
-                        className="jp-openeo-server-connect"
-                        onClick={onLogin}
-                        disabled={
-                          serverBusy || !serverUsername || !serverPassword
-                        }
-                      >
-                        {serverBusy ? 'Signing in…' : 'Log in'}
-                      </button>
-                    </div>
-                  </>
+                  <Signin />
                 )}
               </div>
             </section>
