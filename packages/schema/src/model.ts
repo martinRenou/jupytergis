@@ -78,8 +78,12 @@ const SPECTA_STORY_TYPES: IJGISStoryMap['storyType'][] = [
   'Vertical Scroll',
 ];
 
+export const isJupyterLite = () => {
+  return document.querySelectorAll('[data-jupyter-lite-root]')[0] !== undefined;
+};
+
 const DEFAULT_SETTINGS: IJupyterGISSettings = {
-  proxyUrl: 'https://corsproxy.io',
+  proxyUrl: isJupyterLite() ? 'https://corsproxy.io' : '/jupytergis_core/proxy',
   leftPanelDisabled: false,
   rightPanelDisabled: false,
   layersDisabled: false,
